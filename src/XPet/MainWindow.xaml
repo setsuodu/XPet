@@ -1,0 +1,117 @@
+<Window x:Class="XPet.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="XPet"
+        Width="220" Height="250"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+
+    <Grid>
+
+        <!-- 气泡 -->
+        <Border x:Name="Bubble" VerticalAlignment="Top" HorizontalAlignment="Center"
+                Margin="8,8,8,0" Padding="10,6" MaxWidth="200"
+                CornerRadius="10" BorderBrush="#33000000" BorderThickness="1"
+                Background="#F5FFFFFF" Visibility="Collapsed">
+            <TextBlock x:Name="BubbleText" FontSize="13" Foreground="#222222"
+                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="84"/>
+        </Border>
+
+        <!-- 宠物：一只头上长芽的绿色团子（原创形象） -->
+        <Grid x:Name="Pet" Width="130" Height="130"
+              VerticalAlignment="Bottom" Margin="0,0,0,10"
+              Background="Transparent" Cursor="Hand"
+              RenderTransformOrigin="0.5,1">
+            <Grid.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="PetScale"/>
+                    <TranslateTransform x:Name="BobShift"/>
+                    <TranslateTransform x:Name="JumpShift"/>
+                </TransformGroup>
+            </Grid.RenderTransform>
+
+            <Canvas x:Name="Art" Width="130" Height="130">
+
+                <!-- 影子 -->
+                <Ellipse Canvas.Left="25" Canvas.Top="112" Width="80" Height="12" Fill="#33000000"/>
+
+                <!-- 身体 -->
+                <Ellipse Canvas.Left="10" Canvas.Top="30" Width="110" Height="88"
+                         Stroke="#3E9C74" StrokeThickness="2.5">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush GradientOrigin="0.35,0.3" Center="0.5,0.5" RadiusX="0.7" RadiusY="0.7">
+                            <GradientStop Color="#C9F7DE" Offset="0"/>
+                            <GradientStop Color="#6FD1A3" Offset="1"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+
+                <!-- 头顶的小芽 -->
+                <Path Data="M65,32 C65,22 63,16 59,11" Stroke="#3E9C74" StrokeThickness="3"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                <Ellipse Canvas.Left="44" Canvas.Top="3" Width="20" Height="10"
+                         Fill="#86E05E" Stroke="#3E9C74" StrokeThickness="1.5"
+                         RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.RenderTransform><RotateTransform Angle="-25"/></Ellipse.RenderTransform>
+                </Ellipse>
+                <Ellipse Canvas.Left="58" Canvas.Top="6" Width="20" Height="10"
+                         Fill="#86E05E" Stroke="#3E9C74" StrokeThickness="1.5"
+                         RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.RenderTransform><RotateTransform Angle="25"/></Ellipse.RenderTransform>
+                </Ellipse>
+
+                <!-- 腮红 -->
+                <Ellipse Canvas.Left="24" Canvas.Top="80" Width="16" Height="9" Fill="#FF9AA2" Opacity="0.55"/>
+                <Ellipse Canvas.Left="90" Canvas.Top="80" Width="16" Height="9" Fill="#FF9AA2" Opacity="0.55"/>
+
+                <!-- 眼睛：平常 -->
+                <Canvas x:Name="EyesNormal" Width="130" Height="130" RenderTransformOrigin="0.5,0.55">
+                    <Canvas.RenderTransform><ScaleTransform x:Name="EyesScale"/></Canvas.RenderTransform>
+                    <Ellipse Canvas.Left="39" Canvas.Top="62" Width="13" Height="17" Fill="#1E2A26"/>
+                    <Ellipse Canvas.Left="78" Canvas.Top="62" Width="13" Height="17" Fill="#1E2A26"/>
+                    <Ellipse Canvas.Left="43" Canvas.Top="65" Width="4" Height="5" Fill="White"/>
+                    <Ellipse Canvas.Left="82" Canvas.Top="65" Width="4" Height="5" Fill="White"/>
+                </Canvas>
+
+                <!-- 眼睛：开心 -->
+                <Canvas x:Name="EyesHappy" Width="130" Height="130" Visibility="Collapsed">
+                    <Path Data="M38,74 Q45.5,62 53,74" Stroke="#1E2A26" StrokeThickness="3"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Path Data="M77,74 Q84.5,62 92,74" Stroke="#1E2A26" StrokeThickness="3"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                </Canvas>
+
+                <!-- 眼睛：出问题 -->
+                <Canvas x:Name="EyesWarn" Width="130" Height="130" Visibility="Collapsed">
+                    <Path Data="M39,63 L52,77 M52,63 L39,77" Stroke="#1E2A26" StrokeThickness="3"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Path Data="M78,63 L91,77 M91,63 L78,77" Stroke="#1E2A26" StrokeThickness="3"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                </Canvas>
+
+                <!-- 嘴 -->
+                <Path x:Name="MouthSmile" Data="M57,86 Q65,93 73,86" Stroke="#1E2A26" StrokeThickness="2.5"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                <Path x:Name="MouthBig" Data="M55,83 Q65,100 75,83 Z" Fill="#FF7B8A" Stroke="#1E2A26"
+                      StrokeThickness="2.5" StrokeLineJoin="Round" Visibility="Collapsed"/>
+                <Path x:Name="MouthWavy" Data="M55,89 Q60,83 65,89 Q70,95 75,89" Stroke="#1E2A26"
+                      StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Visibility="Collapsed"/>
+
+                <!-- 入库状态灯：绿=运行中，灰=已停止 -->
+                <Ellipse x:Name="Led" Canvas.Left="14" Canvas.Top="36" Width="10" Height="10"
+                         Fill="#9AA5A0" Stroke="White" StrokeThickness="1.5"/>
+
+                <!-- 待处理数量角标 -->
+                <Border x:Name="Badge" Canvas.Left="92" Canvas.Top="22" MinWidth="22" Height="22"
+                        CornerRadius="11" Background="#E5484D" Visibility="Collapsed">
+                    <TextBlock x:Name="BadgeText" Foreground="White" FontSize="12" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0"/>
+                </Border>
+
+            </Canvas>
+        </Grid>
+
+    </Grid>
+</Window>

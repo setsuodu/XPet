@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- WPF 和 WinForms（只用来做托盘图标）同时启用时，隐式 using 会造成类型歧义，所以关掉 -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>XPet</AssemblyName>
+    <RootNamespace>XPet</RootNamespace>
+  </PropertyGroup>
+
+</Project>
