@@ -10,6 +10,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>XPet</AssemblyName>
     <RootNamespace>XPet</RootNamespace>
+	<ApplicationIcon>Resources/xpet.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>
