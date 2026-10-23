@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace XPet;
@@ -51,6 +50,19 @@ public partial class MainWindow : Window
     System.Windows.Forms.NotifyIcon? tray;
     int pending;
 
+    // ===================== 精灵图相关 =====================
+    BitmapImage? _imgNormal, _imgHappy, _imgWarn;
+    BitmapImage[] _blinkFrames = Array.Empty<BitmapImage>();
+    BitmapImage[] _toHappy = Array.Empty<BitmapImage>();
+    BitmapImage[] _happyToNormal = Array.Empty<BitmapImage>();
+    BitmapImage[] _toWarn = Array.Empty<BitmapImage>();
+    BitmapImage[] _warnToNormal = Array.Empty<BitmapImage>();
+
+    DispatcherTimer? _animTimer;
+    int _animIndex;
+    Action? _onAnimComplete;
+    Face _currentFace = Face.Normal;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -65,7 +77,11 @@ public partial class MainWindow : Window
         });
 
         bubbleTimer.Tick += (_, _) => { bubbleTimer.Stop(); Bubble.Visibility = Visibility.Collapsed; };
-        faceTimer.Tick += (_, _) => { faceTimer.Stop(); SetFace(Face.Normal); };
+        faceTimer.Tick += (_, _) =>
+        {
+            faceTimer.Stop();
+            ReturnToNormal();
+        };
         blinkTimer.Tick += (_, _) =>
         {
             Blink();
@@ -89,6 +105,7 @@ public partial class MainWindow : Window
 
     void OnLoaded(object sender, RoutedEventArgs e)
     {
+        LoadSprites();          // 加载精灵图
         LoadAll();
         RestorePosition();
         InitTray();
@@ -370,28 +387,164 @@ public partial class MainWindow : Window
             tray.Text = $"XPet　入库{(ingest.IsRunning ? "运行中" : "已停止")}　待处理 {pending}";
     }
 
+    // ===================== 精灵图核心逻辑 =====================
+
+    void LoadSprites()
+    {
+        _imgNormal = LoadImg("normal.png");
+        _imgHappy  = LoadImg("happy.png");
+        _imgWarn   = LoadImg("warn.png");
+
+        _blinkFrames   = LoadSeq("blink", 3);
+        _toHappy       = LoadSeq("to_happy", 4);
+        _happyToNormal = LoadSeq("happy_to_normal", 4);
+        _toWarn        = LoadSeq("to_warn", 4);
+        _warnToNormal  = LoadSeq("warn_to_normal", 4);
+
+        PetImage.Source = _imgNormal;
+        _currentFace = Face.Normal;
+    }
+
+    BitmapImage? LoadImg(string name)
+    {
+        try
+        {
+            var uri = new Uri($"pack://application:,,,/Resources/Pet/{name}", UriKind.Absolute);
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource = uri;
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+            return bmp;
+        }
+        catch
+        {
+            // 图片不存在时返回 null，运行时不会崩
+            return null;
+        }
+    }
+
+    BitmapImage[] LoadSeq(string prefix, int count)
+    {
+        var list = new List<BitmapImage>();
+        for (int i = 0; i < count; i++)
+        {
+            var img = LoadImg($"{prefix}_{i}.png");
+            if (img != null) list.Add(img);
+        }
+        return list.ToArray();
+    }
+
+    void PlayAnim(BitmapImage[] frames, int intervalMs = 80, Action? onComplete = null)
+    {
+        if (frames.Length == 0)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        _animTimer?.Stop();
+        _animIndex = 0;
+        _onAnimComplete = onComplete;
+
+        PetImage.Source = frames[0];
+
+        _animTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(intervalMs) };
+        _animTimer.Tick += (_, _) =>
+        {
+            _animIndex++;
+            if (_animIndex >= frames.Length)
+            {
+                _animTimer.Stop();
+                _onAnimComplete?.Invoke();
+                return;
+            }
+            PetImage.Source = frames[_animIndex];
+        };
+        _animTimer.Start();
+    }
+
     void SetFace(Face f)
     {
-        EyesNormal.Visibility = f == Face.Normal ? Visibility.Visible : Visibility.Collapsed;
-        EyesHappy.Visibility = f == Face.Happy ? Visibility.Visible : Visibility.Collapsed;
-        EyesWarn.Visibility = f == Face.Warn ? Visibility.Visible : Visibility.Collapsed;
-        MouthSmile.Visibility = f == Face.Normal ? Visibility.Visible : Visibility.Collapsed;
-        MouthBig.Visibility = f == Face.Happy ? Visibility.Visible : Visibility.Collapsed;
-        MouthWavy.Visibility = f == Face.Warn ? Visibility.Visible : Visibility.Collapsed;
+        _currentFace = f;
+        PetImage.Source = f switch
+        {
+            Face.Happy => _imgHappy ?? _imgNormal,
+            Face.Warn  => _imgWarn  ?? _imgNormal,
+            _          => _imgNormal
+        };
     }
 
     void FaceFor(Face f, int ms)
     {
-        SetFace(f);
-        faceTimer.Stop();
-        faceTimer.Interval = TimeSpan.FromMilliseconds(ms);
-        faceTimer.Start();
+        if (f == Face.Happy && _toHappy.Length > 0)
+        {
+            PlayAnim(_toHappy, 70, () =>
+            {
+                _currentFace = Face.Happy;
+                PetImage.Source = _imgHappy ?? _imgNormal;
+                faceTimer.Stop();
+                faceTimer.Interval = TimeSpan.FromMilliseconds(ms);
+                faceTimer.Start();
+            });
+        }
+        else if (f == Face.Warn && _toWarn.Length > 0)
+        {
+            PlayAnim(_toWarn, 70, () =>
+            {
+                _currentFace = Face.Warn;
+                PetImage.Source = _imgWarn ?? _imgNormal;
+                faceTimer.Stop();
+                faceTimer.Interval = TimeSpan.FromMilliseconds(ms);
+                faceTimer.Start();
+            });
+        }
+        else
+        {
+            SetFace(f);
+            faceTimer.Stop();
+            faceTimer.Interval = TimeSpan.FromMilliseconds(ms);
+            faceTimer.Start();
+        }
+    }
+
+    void ReturnToNormal()
+    {
+        if (_currentFace == Face.Happy && _happyToNormal.Length > 0)
+        {
+            PlayAnim(_happyToNormal, 70, () =>
+            {
+                _currentFace = Face.Normal;
+                PetImage.Source = _imgNormal;
+            });
+        }
+        else if (_currentFace == Face.Warn && _warnToNormal.Length > 0)
+        {
+            PlayAnim(_warnToNormal, 70, () =>
+            {
+                _currentFace = Face.Normal;
+                PetImage.Source = _imgNormal;
+            });
+        }
+        else
+        {
+            _currentFace = Face.Normal;
+            PetImage.Source = _imgNormal;
+        }
     }
 
     void Blink()
     {
-        EyesScale.BeginAnimation(ScaleTransform.ScaleYProperty,
-            new DoubleAnimation(1, 0.1, TimeSpan.FromMilliseconds(90)) { AutoReverse = true });
+        // 只在 Normal 状态下眨眼，避免和表情冲突
+        if (_currentFace != Face.Normal || _blinkFrames.Length == 0) return;
+
+        var backup = PetImage.Source;
+        PlayAnim(_blinkFrames, 60, () =>
+        {
+            if (_currentFace == Face.Normal)
+                PetImage.Source = backup;
+        });
     }
 
     void Jump()
@@ -400,30 +553,17 @@ public partial class MainWindow : Window
             new DoubleAnimation(0, -24, TimeSpan.FromMilliseconds(170))
             {
                 AutoReverse = true,
-                RepeatBehavior = new RepeatBehavior(2),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
             });
     }
 
+    // ---------- 工具 ----------
+
     void UI(Action a)
     {
         if (Dispatcher.CheckAccess()) a();
-        else Dispatcher.BeginInvoke(a);
+        else Dispatcher.Invoke(a);
     }
 
-    static string Short(string s) => s.Length <= 60 ? s : s[..60] + "…";
-
-    // ---------- 不出现在 Alt+Tab 里 ----------
-
-    [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-    [DllImport("user32.dll")] static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-    protected override void OnSourceInitialized(EventArgs e)
-    {
-        base.OnSourceInitialized(e);
-        var h = new WindowInteropHelper(this).Handle;
-        const int GWL_EXSTYLE = -20;
-        const int WS_EX_TOOLWINDOW = 0x80;
-        SetWindowLong(h, GWL_EXSTYLE, GetWindowLong(h, GWL_EXSTYLE) | WS_EX_TOOLWINDOW);
-    }
+    static string Short(string s) => s.Length <= 80 ? s : s[..77] + "...";
 }
