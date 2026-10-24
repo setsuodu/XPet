@@ -1,0 +1,56 @@
+[
+  {
+    "id": "open-downloads",
+    "label": "打开下载文件夹",
+    "description": "用资源管理器打开 Downloads",
+    "category": "文件工具",
+    "icon": "📁",
+    "type": "open",
+    "target": "%USERPROFILE%\\Downloads"
+  },
+  {
+    "id": "open-appdata",
+    "label": "打开配置目录",
+    "description": "打开 XPetPanel 的配置文件夹",
+    "category": "系统维护",
+    "icon": "⚙️",
+    "type": "open",
+    "target": "%APPDATA%\\XPetPanel"
+  },
+  {
+    "id": "notepad",
+    "label": "记事本",
+    "description": "启动系统记事本",
+    "category": "系统维护",
+    "icon": "📝",
+    "type": "cmd",
+    "args": ["notepad.exe"]
+  },
+  {
+    "id": "calc",
+    "label": "计算器",
+    "description": "启动系统计算器",
+    "category": "系统维护",
+    "icon": "🔢",
+    "type": "cmd",
+    "args": ["calc.exe"]
+  },
+  {
+    "id": "artcraft-updater",
+    "label": "ArtCraft 更新器",
+    "description": "启动 craft_updater.py（请改成真实路径）",
+    "category": "创意工具",
+    "icon": "🎨",
+    "type": "cmd",
+    "args": ["python", "D:\\GitHub\\[Workspace]\\my-scripts\\artcraft\\craft_updater.py"]
+  },
+  {
+    "id": "clear-run",
+    "label": "清除运行历史",
+    "description": "清除 Win+R 历史（请改成真实路径）",
+    "category": "系统维护",
+    "icon": "🧹",
+    "type": "cmd",
+    "args": ["cmd.exe", "/c", "D:\\GitHub\\[Workspace]\\my-scripts\\windows\\clear-run-history.bat"]
+  }
+]
