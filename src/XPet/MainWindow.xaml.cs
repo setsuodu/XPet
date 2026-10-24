@@ -49,6 +49,7 @@ public partial class MainWindow : Window
 
     System.Windows.Forms.NotifyIcon? tray;
     int pending;
+    readonly VoicePlayer voice = new();
 
     // ===================== 精灵图相关 =====================
     BitmapImage? _imgNormal, _imgHappy, _imgWarn;
@@ -74,6 +75,7 @@ public partial class MainWindow : Window
         {
             UpdateIndicators();
             Notify($"入库程序退出了（退出码 {code}）", true);
+            voice.Play("ingest_exit");
         });
 
         bubbleTimer.Tick += (_, _) => { bubbleTimer.Stop(); Bubble.Visibility = Visibility.Collapsed; };
@@ -126,7 +128,10 @@ public partial class MainWindow : Window
         RefreshPending();
 
         if (Bubble.Visibility != Visibility.Visible)
+        {
             ShowBubble("你好，右键打开菜单", false, 3000);
+            voice.Play("hello");
+        }
     }
 
     void LoadAll()
@@ -226,6 +231,7 @@ public partial class MainWindow : Window
             // 没怎么动 = 单击
             RefreshPending();
             ShowBubble($"入库：{(ingest.IsRunning ? "运行中" : "已停止")}，待处理 {pending}", false, 3000);
+            voice.Play("click");
         }
         else
         {
@@ -269,6 +275,7 @@ public partial class MainWindow : Window
         {
             LoadAll();
             ShowBubble("配置已重新载入（入库程序需要手动重启才生效）", false, 4000);
+            voice.Play("config_reload");
         };
         m.Items.Add(reload);
 
@@ -289,6 +296,14 @@ public partial class MainWindow : Window
         debug.Items.Add(MakeDebugItem("跳跃 Jump", () => Jump()));
         debug.Items.Add(new Separator());
         debug.Items.Add(MakeDebugItem("重新加载精灵图", () => { LoadSprites(); ShowBubble("精灵图已重新加载", false, 2000); }));
+        debug.Items.Add(new Separator());
+        var voiceMenu = new MenuItem { Header = "测试语音" };
+        foreach (var name in new[] { "hello", "ingest_start", "ingest_ok", "ingest_skip", "ingest_warn", "ingest_error", "ingest_stop", "ingest_exit", "click", "config_reload" })
+        {
+            var n = name;
+            voiceMenu.Items.Add(MakeDebugItem(n, () => voice.Play(n)));
+        }
+        debug.Items.Add(voiceMenu);
         m.Items.Add(debug);
 
         m.Items.Add(new Separator());
@@ -331,6 +346,7 @@ public partial class MainWindow : Window
         ingest.Stop();
         UpdateIndicators();
         ShowBubble("入库已停止", false, 2500);
+        voice.Play("ingest_stop");
     }
 
     void HandleIngestLine(string text, bool isErr)
@@ -338,12 +354,14 @@ public partial class MainWindow : Window
         if (isErr)
         {
             Notify($"入库出错：{Short(text)}", true);
+            voice.Play("ingest_error");
             return;
         }
 
         if (text.StartsWith("监视"))
         {
             ShowBubble("入库已启动，监视下载文件夹", false, 3000);
+            voice.Play("ingest_start");
             return;
         }
 
@@ -358,6 +376,7 @@ public partial class MainWindow : Window
             if (rest.Contains("有问题"))
             {
                 Notify($"已入库 {who}，但有媒体问题", true);
+                voice.Play("ingest_warn");
             }
             else
             {
@@ -367,6 +386,7 @@ public partial class MainWindow : Window
                 ShowBubble(msg, false, 4500);
                 FaceFor(Face.Happy, 3000);
                 Jump();
+                voice.Play(rest.Contains("跳过") ? "ingest_skip" : "ingest_ok");
             }
             RefreshPending();
             return;
@@ -374,7 +394,10 @@ public partial class MainWindow : Window
 
         // 问题说明行（"    - xxx"）或明确的失败信息
         if (text.TrimStart().StartsWith("- ") || text.Contains("出错") || text.Contains("下载失败"))
+        {
             Notify(Short(text.Trim()), true);
+            voice.Play("ingest_error");
+        }
     }
 
     // ---------- 显示 ----------

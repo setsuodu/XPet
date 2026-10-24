@@ -20,6 +20,10 @@
     <None Update="Resources\xpet.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- 语音文件：复制到输出目录，方便热替换，不嵌入 -->
+    <None Update="Resources\Voice\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
