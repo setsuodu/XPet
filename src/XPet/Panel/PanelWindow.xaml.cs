@@ -7,12 +7,12 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using XPetPanel.Models;
-using XPetPanel.Services;
+using XPet.Panel.Models;
+using XPet.Panel.Services;
 
-namespace XPetPanel;
+namespace XPet.Panel;
 
-public partial class MainWindow : Window
+public partial class PanelWindow : Window
 {
     List<ToolItem> _tools = new();
     string _currentCategory = "全部";
@@ -20,7 +20,7 @@ public partial class MainWindow : Window
     readonly ToolRunner _runner = new();
     readonly DispatcherTimer _toastTimer = new();
 
-    public MainWindow()
+    public PanelWindow()
     {
         InitializeComponent();
 
@@ -63,7 +63,7 @@ public partial class MainWindow : Window
                 Padding = new Thickness(12, 10, 12, 10),
                 Margin = new Thickness(0, 0, 0, 4),
                 Background = cat == _currentCategory ? new SolidColorBrush(Color.FromRgb(0xEB, 0xF8, 0xFF)) : Brushes.Transparent,
-                Foreground = cat == _currentCategory ? (Brush)FindResource("AccentBrush") : (Brush)FindResource("TextPrimary"),
+                Foreground = cat == _currentCategory ? (Brush)FindResource("PanelAccentBrush") : (Brush)FindResource("PanelTextPrimary"),
                 BorderThickness = new Thickness(0),
                 Cursor = Cursors.Hand,
                 FontSize = 13,
@@ -102,7 +102,7 @@ public partial class MainWindow : Window
             ToolHost.Children.Add(new TextBlock
             {
                 Text = "没有匹配的工具",
-                Foreground = (Brush)FindResource("TextSecondary"),
+                Foreground = (Brush)FindResource("PanelTextSecondary"),
                 Margin = new Thickness(8),
                 FontSize = 14,
             });
@@ -144,7 +144,7 @@ public partial class MainWindow : Window
             Text = tool.Label,
             FontSize = 14,
             FontWeight = FontWeights.SemiBold,
-            Foreground = (Brush)FindResource("TextPrimary"),
+            Foreground = (Brush)FindResource("PanelTextPrimary"),
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
         });
@@ -156,7 +156,7 @@ public partial class MainWindow : Window
             {
                 Text = tool.Description,
                 FontSize = 12,
-                Foreground = (Brush)FindResource("TextSecondary"),
+                Foreground = (Brush)FindResource("PanelTextSecondary"),
                 Margin = new Thickness(0, 6, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
             });
@@ -189,8 +189,8 @@ public partial class MainWindow : Window
     {
         ToastText.Text = text;
         ToastText.Foreground = warn
-            ? (Brush)FindResource("DangerBrush")
-            : (Brush)FindResource("AccentBrush");
+            ? (Brush)FindResource("PanelDangerBrush")
+            : (Brush)FindResource("PanelAccentBrush");
         ToastText.Visibility = Visibility.Visible;
         StatusText.Text = text;
 

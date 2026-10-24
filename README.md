@@ -1,65 +1,58 @@
-# XPetPanel — 可扩展工具中心 MVP
+# XPet
 
-轻量 WPF 主窗体，用来聚合 my-scripts / XPet 的各种小工具。  
-后续可以和桌面宠物合并，或作为宠物双击后弹出的面板。
+一个桌面宠物：常驻右下角，帮你启动 `x_ingest.py`、打开固定页面、执行自定义命令，并用气泡告诉你入库结果。
 
-## 目录结构
+已合并 **XPet 工具中心（原 XPetPanel）**：右键菜单 →「打开工具中心」即可弹出工具面板。
 
-```
-XPetPanel/
-├── README.md
-└── src/
-    └── XPetPanel/
-        ├── App.xaml / App.xaml.cs
-        ├── MainWindow.xaml / MainWindow.xaml.cs
-        ├── Models/
-        │   └── ToolItem.cs
-        ├── Services/
-        │   ├── ConfigStore.cs
-        │   └── ToolRunner.cs
-        ├── tools.json
-        └── XPetPanel.csproj
-```
+## 构建和运行
 
-与原版 XPet（`src/XPet/`）保持一致。
-
-## 功能
-
-- 左侧分类导航 + 右侧卡片列表
-- 顶部搜索（名称 / 描述 / 分类）
-- 配置驱动：`%APPDATA%\XPetPanel\tools.json`
-- 支持三种执行类型：
-  - `open`：用系统默认方式打开文件/文件夹/网址
-  - `cmd`：后台运行命令（无黑窗），结束后提示成功/失败
-  - `chrome`：用 Chrome 打开网址
-- 单击卡片即可执行
-
-## 运行
-
-需要 [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)（Windows）。
+需要 .NET 10 SDK（Windows）。
 
 ```bash
-cd src/XPetPanel
+cd src/XPet
 dotnet run
 ```
 
-发布单文件：
+发布成单个 exe：
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 ```
 
-产物在 `bin\Release\net8.0-windows\win-x64\publish\`。
+发布后的 exe 在 `bin\Release\net10.0-windows\win-x64\publish\`，目标电脑需要装 .NET 10 桌面运行时。
+
+## 使用
+
+* **左键拖动** 移动位置，位置会记住。**单击** 显示入库状态。
+* **右键** 打开菜单：任务列表、启动/停止入库、**打开工具中心**、打开配置文件夹、重新载入配置、隐藏到托盘、退出。
+* 头上的灯：绿色 = 入库程序运行中，灰色 = 已停止。
+* 右上角红色数字 = 下载文件夹里等待处理的 x_*.json 数量。
+* 脸的变化：开心 = 入库成功；叉叉眼 = 有错误或警告。
+* 隐藏到托盘后，消息会改用托盘气泡提示。
 
 ## 配置
 
-首次运行会把示例 `tools.json` 复制到：
+### 宠物配置（%APPDATA%\XPet\）
 
-```
-%APPDATA%\XPetPanel\tools.json
-```
+第一次运行会自动生成，右键菜单「打开配置文件夹」可以直达。
 
-直接编辑这个文件即可增删工具。字段说明：
+#### config.json
+
+| 字段 | 默认值 | 说明 |
+| --- | --- | --- |
+| vault | D:\GitLab\obsidian-x | 笔记仓库 |
+| inbox | 空 | 浏览器下载文件夹，空 = 用户目录下的 Downloads |
+| python | python | python 可执行文件，不在 PATH 里就填完整路径，或者填 py |
+| ingestScript | {vault}\_tools\x_ingest.py | 入库脚本位置 |
+| chrome | chrome | Chrome 可执行文件，打不开就填完整路径 |
+| chromeProfile | 空 | 有多个 Chrome 账号时填，例如 Profile 1 |
+| autoStartIngest | true | 宠物启动时是否自动启动入库程序 |
+
+另有 `tasks.json`（右键任务列表）、`state.json`（窗口位置）。
+
+### 工具中心配置（%APPDATA%\XPetPanel\tools.json）
+
+首次打开工具中心时会把示例 `Panel/tools.json` 复制过去。字段说明：
 
 | 字段 | 说明 |
 |------|------|
@@ -71,7 +64,21 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile
 | type | `cmd` / `open` / `chrome` |
 | target | open / chrome 用的路径或网址 |
 | args | cmd 用的参数列表，args[0] 是程序 |
-| needsAdmin | 预留 |
-| isFavorite | 预留 |
 
-改完后点界面上的「重新载入」即可，无需重启。
+改完后点工具中心界面上的「重新载入」即可。
+
+## 目录结构（合并后）
+
+```
+src/
+├── XPet.slnx
+└── XPet/
+    ├── XPet.csproj          # 单一项目，已包含工具中心
+    ├── MainWindow.*         # 桌面宠物
+    ├── Panel/
+    │   ├── PanelWindow.*    # 工具中心窗口
+    │   ├── Models/ToolItem.cs
+    │   ├── Services/
+    │   └── tools.json       # 默认工具列表（会复制到输出目录）
+    └── Resources/           # 精灵图、语音、图标
+```

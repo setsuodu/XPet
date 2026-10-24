@@ -24,6 +24,10 @@
     <None Update="Resources\Voice\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- 工具中心默认配置：复制到输出目录 Panel/ 下 -->
+    <None Update="Panel\tools.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

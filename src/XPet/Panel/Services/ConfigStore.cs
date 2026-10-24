@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using XPetPanel.Models;
+using XPet.Panel.Models;
 
-namespace XPetPanel.Services;
+namespace XPet.Panel.Services;
 
 public static class ConfigStore
 {
@@ -33,7 +33,9 @@ public static class ConfigStore
         // 优先读 AppData，没有就尝试读程序旁边的示例
         if (!File.Exists(path))
         {
-            var local = Path.Combine(AppContext.BaseDirectory, "tools.json");
+            var local = Path.Combine(AppContext.BaseDirectory, "Panel", "tools.json");
+            if (!File.Exists(local))
+                local = Path.Combine(AppContext.BaseDirectory, "tools.json");
             if (File.Exists(local))
             {
                 File.Copy(local, path, overwrite: false);

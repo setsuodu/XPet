@@ -13,6 +13,8 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
+using XPet.Panel;
+
 namespace XPet;
 
 public partial class MainWindow : Window
@@ -266,6 +268,10 @@ public partial class MainWindow : Window
         toggle.Click += (_, _) => { if (ingest.IsRunning) StopIngest(); else StartIngest(); };
         m.Items.Add(toggle);
 
+        var openPanel = new MenuItem { Header = "打开工具中心" };
+        openPanel.Click += (_, _) => OpenPanel();
+        m.Items.Add(openPanel);
+
         var openCfg = new MenuItem { Header = "打开配置文件夹" };
         openCfg.Click += (_, _) => Process.Start(new ProcessStartInfo(Store.Dir) { UseShellExecute = true });
         m.Items.Add(openCfg);
@@ -317,6 +323,26 @@ public partial class MainWindow : Window
         m.Items.Add(exit);
 
         m.IsOpen = true;
+    }
+
+
+    PanelWindow? panelWindow;
+
+    void OpenPanel()
+    {
+        if (panelWindow == null || !panelWindow.IsLoaded)
+        {
+            panelWindow = new PanelWindow();
+            panelWindow.Closed += (_, _) => panelWindow = null;
+            panelWindow.Show();
+        }
+        else
+        {
+            if (panelWindow.WindowState == WindowState.Minimized)
+                panelWindow.WindowState = WindowState.Normal;
+            panelWindow.Activate();
+            panelWindow.Focus();
+        }
     }
 
     MenuItem MakeDebugItem(string header, Action action)

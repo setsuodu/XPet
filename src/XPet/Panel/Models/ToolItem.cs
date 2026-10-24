@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace XPetPanel.Models;
+namespace XPet.Panel.Models;
 
 /// <summary>
 /// 单个可执行工具。type: cmd / open / chrome

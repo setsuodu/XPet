@@ -2,9 +2,9 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using XPetPanel.Models;
+using XPet.Panel.Models;
 
-namespace XPetPanel.Services;
+namespace XPet.Panel.Services;
 
 public sealed class ToolRunner
 {
