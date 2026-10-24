@@ -164,9 +164,26 @@ public partial class MainWindow : Window
         menu.Items.Add("显示 / 隐藏宠物", null, (_, _) => ToggleVisible());
         menu.Items.Add("退出", null, (_, _) => Quit());
 
+        System.Drawing.Icon? icon = null;
+        try
+        {
+            // 优先从嵌入资源或输出目录加载 xpet.ico
+            var icoPath = Path.Combine(AppContext.BaseDirectory, "Resources", "xpet.ico");
+            if (File.Exists(icoPath))
+                icon = new System.Drawing.Icon(icoPath);
+            else
+            {
+                // 回退：从程序集提取 ApplicationIcon
+                using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("XPet.Resources.xpet.ico");
+                if (stream != null)
+                    icon = new System.Drawing.Icon(stream);
+            }
+        }
+        catch { /* 失败就用系统默认 */ }
+
         tray = new System.Windows.Forms.NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = icon ?? System.Drawing.SystemIcons.Application,
             Text = "XPet",
             Visible = true,
             ContextMenuStrip = menu,
@@ -257,6 +274,25 @@ public partial class MainWindow : Window
 
         m.Items.Add(new Separator());
 
+        // ---------- 状态机调试菜单 ----------
+        var debug = new MenuItem { Header = "状态机调试" };
+        debug.Items.Add(MakeDebugItem("Normal（静止）", () => { faceTimer.Stop(); SetFace(Face.Normal); }));
+        debug.Items.Add(MakeDebugItem("Happy（静止）", () => { faceTimer.Stop(); SetFace(Face.Happy); }));
+        debug.Items.Add(MakeDebugItem("Warn（静止）", () => { faceTimer.Stop(); SetFace(Face.Warn); }));
+        debug.Items.Add(new Separator());
+        debug.Items.Add(MakeDebugItem("→ Happy 过渡", () => FaceFor(Face.Happy, 4000)));
+        debug.Items.Add(MakeDebugItem("→ Warn 过渡", () => FaceFor(Face.Warn, 4000)));
+        debug.Items.Add(MakeDebugItem("Happy → Normal", () => { _currentFace = Face.Happy; ReturnToNormal(); }));
+        debug.Items.Add(MakeDebugItem("Warn → Normal", () => { _currentFace = Face.Warn; ReturnToNormal(); }));
+        debug.Items.Add(new Separator());
+        debug.Items.Add(MakeDebugItem("眨眼 Blink", () => Blink()));
+        debug.Items.Add(MakeDebugItem("跳跃 Jump", () => Jump()));
+        debug.Items.Add(new Separator());
+        debug.Items.Add(MakeDebugItem("重新加载精灵图", () => { LoadSprites(); ShowBubble("精灵图已重新加载", false, 2000); }));
+        m.Items.Add(debug);
+
+        m.Items.Add(new Separator());
+
         var hide = new MenuItem { Header = "隐藏到托盘" };
         hide.Click += (_, _) => Hide();
         m.Items.Add(hide);
@@ -266,6 +302,13 @@ public partial class MainWindow : Window
         m.Items.Add(exit);
 
         m.IsOpen = true;
+    }
+
+    MenuItem MakeDebugItem(string header, Action action)
+    {
+        var item = new MenuItem { Header = header };
+        item.Click += (_, _) => action();
+        return item;
     }
 
     // ---------- 入库程序 ----------
@@ -428,9 +471,9 @@ public partial class MainWindow : Window
     BitmapImage[] LoadSeq(string prefix, int count)
     {
         var list = new List<BitmapImage>();
-        for (int i = 0; i < count; i++)
+        for (int i = 1; i <= count; i++)
         {
-            var img = LoadImg($"{prefix}_{i}.png");
+            var img = LoadImg($"{prefix}_{i:D2}.png");
             if (img != null) list.Add(img);
         }
         return list.ToArray();

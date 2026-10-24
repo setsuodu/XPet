@@ -10,11 +10,16 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>XPet</AssemblyName>
     <RootNamespace>XPet</RootNamespace>
-	<ApplicationIcon>Resources\xpet.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\xpet.ico</ApplicationIcon>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="Resources\Pet\**\*.png" />
+    <Resource Include="Resources\xpet.ico" />
+    <None Update="Resources\xpet.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
