@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\Pet\**\*.png" />
-    <Resource Include="Resources\xpet.ico" />
+    <!-- ApplicationIcon 已写入 PE；再复制一份到输出目录，方便开发时托盘加载 -->
     <None Update="Resources\xpet.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

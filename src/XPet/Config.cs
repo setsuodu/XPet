@@ -49,7 +49,6 @@ public static class Defaults
 {
     public static List<TaskItem> Tasks() => new()
     {
-        new TaskItem { Label = "打开 Chrome 下载页", Type = "chrome", Url = "chrome://downloads/" },
         new TaskItem { Label = "打开 X 点赞页", Type = "chrome", Url = "https://x.com/i/history/likes" },
         new TaskItem { Label = "打开笔记仓库", Type = "open", Target = "{vault}" },
         new TaskItem
@@ -63,6 +62,12 @@ public static class Defaults
             Label = "yt-dlp 下载剪贴板里的链接",
             Type = "cmd",
             Args = new() { "yt-dlp", "-o", @"{vault}\_dl\%(id)s.%(ext)s", "{clipboard}" },
+        },
+        new TaskItem
+        {
+            Label = "更新 ArtCraft",
+            Type = "cmd",
+            Args = new() { "{python}", @"D:\GitHub\[Workspace]\my-scripts\artcraft\craft_updater.py" },
         },
     };
 }

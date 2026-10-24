@@ -171,19 +171,20 @@ public partial class MainWindow : Window
         menu.Items.Add("显示 / 隐藏宠物", null, (_, _) => ToggleVisible());
         menu.Items.Add("退出", null, (_, _) => Quit());
 
+        // 单文件发布时旁边往往没有 Resources/xpet.ico，优先从 exe 自身 PE 图标提取
         System.Drawing.Icon? icon = null;
         try
         {
-            // 优先从嵌入资源或输出目录加载 xpet.ico
-            var icoPath = Path.Combine(AppContext.BaseDirectory, "Resources", "xpet.ico");
-            if (File.Exists(icoPath))
-                icon = new System.Drawing.Icon(icoPath);
-            else
+            var exe = Environment.ProcessPath
+                ?? Path.Combine(AppContext.BaseDirectory, "XPet.exe");
+            if (File.Exists(exe))
+                icon = System.Drawing.Icon.ExtractAssociatedIcon(exe);
+
+            if (icon == null)
             {
-                // 回退：从程序集提取 ApplicationIcon
-                using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("XPet.Resources.xpet.ico");
-                if (stream != null)
-                    icon = new System.Drawing.Icon(stream);
+                var icoPath = Path.Combine(AppContext.BaseDirectory, "Resources", "xpet.ico");
+                if (File.Exists(icoPath))
+                    icon = new System.Drawing.Icon(icoPath);
             }
         }
         catch { /* 失败就用系统默认 */ }

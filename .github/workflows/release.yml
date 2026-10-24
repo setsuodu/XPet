@@ -27,18 +27,40 @@ jobs:
             -r win-x64 `
             --self-contained false `
             -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
             -o publish
+
+      # 确认 exe 里嵌了 ApplicationIcon（任务栏 / 资源管理器图标）
+      - name: Verify icon embedded
+        shell: pwsh
+        run: |
+          $exe = "publish/XPet.exe"
+          if (-not (Test-Path $exe)) { throw "XPet.exe missing" }
+          Add-Type -AssemblyName System.Drawing
+          $ico = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path $exe))
+          if ($null -eq $ico) { throw "ExtractAssociatedIcon returned null — ApplicationIcon not in PE" }
+          Write-Host "OK icon: $($ico.Width)x$($ico.Height)"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: XPet-win-x64
-          path: publish/XPet.exe
+          path: |
+            publish/XPet.exe
+            publish/Resources/**
+            publish/Panel/**
+
+      - name: Pack release zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/* -DestinationPath XPet-win-x64.zip -Force
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: publish/XPet.exe
+          files: |
+            publish/XPet.exe
+            XPet-win-x64.zip
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
