@@ -24,7 +24,9 @@
     "category": "系统维护",
     "icon": "📝",
     "type": "cmd",
-    "args": ["notepad.exe"]
+    "args": [
+      "notepad.exe"
+    ]
   },
   {
     "id": "calc",
@@ -33,16 +35,22 @@
     "category": "系统维护",
     "icon": "🔢",
     "type": "cmd",
-    "args": ["calc.exe"]
+    "args": [
+      "calc.exe"
+    ]
   },
   {
     "id": "artcraft-updater",
     "label": "ArtCraft 更新器",
-    "description": "启动 craft_updater.py（请改成真实路径）",
+    "description": "启动 craft_updater.py（显示控制台）",
     "category": "创意工具",
     "icon": "🎨",
     "type": "cmd",
-    "args": ["python", "D:\\GitHub\\[Workspace]\\my-scripts\\artcraft\\craft_updater.py"]
+    "args": [
+      "python",
+      "D:\\Program Files\\ArtCraft\\craft_updater.py"
+    ],
+    "visible": true
   },
   {
     "id": "clear-run",
@@ -51,6 +59,10 @@
     "category": "系统维护",
     "icon": "🧹",
     "type": "cmd",
-    "args": ["cmd.exe", "/c", "D:\\GitHub\\[Workspace]\\my-scripts\\windows\\clear-run-history.bat"]
+    "args": [
+      "cmd.exe",
+      "/c",
+      "D:\\GitHub\\[Workspace]\\my-scripts\\windows\\clear-run-history.bat"
+    ]
   }
 ]

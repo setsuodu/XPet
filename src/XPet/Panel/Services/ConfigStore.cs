@@ -111,11 +111,12 @@ public static class ConfigStore
         {
             Id = "artcraft-updater",
             Label = "ArtCraft 更新器",
-            Description = "启动 craft_updater.py（需自行改路径）",
+            Description = "启动 craft_updater.py（显示控制台）",
             Category = "创意工具",
             Icon = "🎨",
             Type = "cmd",
-            Args = new() { "python", @"D:\GitHub\[Workspace]\my-scripts\artcraft\craft_updater.py" },
+            Visible = true,
+            Args = new() { "python", @"D:\Program Files\ArtCraft\craft_updater.py" },
         },
         new ToolItem
         {

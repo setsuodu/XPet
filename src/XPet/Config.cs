@@ -30,13 +30,17 @@ public sealed class TaskItem
     public string Url { get; set; } = "";
     public string Target { get; set; } = "";
     public List<string> Args { get; set; } = new();
+    /// <summary>true = 显示控制台窗口，不重定向输出（适合长期运行的脚本）</summary>
+    public bool Visible { get; set; } = false;
 }
 
-/// <summary>state.json：窗口位置</summary>
+/// <summary>state.json：窗口位置 + 用户偏好</summary>
 public sealed class PetState
 {
     public double? Left { get; set; }
     public double? Top { get; set; }
+    /// <summary>语音音量 0.0~1.0，默认 1.0</summary>
+    public double VoiceVolume { get; set; } = 1.0;
 }
 
 /// <summary>可以直接显示给用户看的错误</summary>
@@ -67,7 +71,8 @@ public static class Defaults
         {
             Label = "更新 ArtCraft",
             Type = "cmd",
-            Args = new() { "{python}", @"D:\GitHub\[Workspace]\my-scripts\artcraft\craft_updater.py" },
+            Visible = true,
+            Args = new() { "{python}", @"D:\Program Files\ArtCraft\craft_updater.py" },
         },
     };
 }

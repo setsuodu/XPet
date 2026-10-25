@@ -79,6 +79,58 @@ public sealed class TaskRunner
         // 每个参数单独展开、单独传递，不经过 shell，所以内容里的空格、引号、& 都不会被解释
         var args = t.Args.Select(a => v.Expand(a)).ToList();
 
+        // visible=true：WorkingDirectory=脚本目录，cmd /k 只跑命令（不再套 cd，避免引号炸）
+        if (t.Visible)
+        {
+            try
+            {
+                var py = args.LastOrDefault(a => a.EndsWith(".py", StringComparison.OrdinalIgnoreCase));
+                var workDir = py != null ? (Path.GetDirectoryName(py) ?? "") : "";
+                if (string.IsNullOrEmpty(workDir) || !Directory.Exists(workDir))
+                    workDir = Environment.CurrentDirectory;
+
+                // 在脚本目录下跑：python 用相对文件名，避免 Program Files 空格引号问题
+                var runArgs = args.ToList();
+                if (py != null)
+                {
+                    var idx = runArgs.FindIndex(a => a.Equals(py, StringComparison.OrdinalIgnoreCase));
+                    if (idx >= 0) runArgs[idx] = Path.GetFileName(py);
+                }
+                var cmdline = string.Join(" ", runArgs.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
+
+                var psiVis = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = "/k " + cmdline,  // 用 Arguments 整串，避免 ArgumentList 二次加引号
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                    WorkingDirectory = workDir,
+                };
+                psiVis.Environment["PYTHONIOENCODING"] = "utf-8";
+                psiVis.Environment["PYTHONUTF8"] = "1";
+
+                try
+                {
+                    var logDir = Path.Combine(Store.Dir, "logs");
+                    Directory.CreateDirectory(logDir);
+                    var logPath = Path.Combine(logDir, $"error-{DateTime.Now:yyyy-MM-dd}.log");
+                    File.AppendAllText(logPath,
+                        $"[{DateTime.Now:HH:mm:ss}] visible 启动「{t.Label}」 cwd={workDir} cmd={cmdline}{Environment.NewLine}",
+                        Encoding.UTF8);
+                }
+                catch { }
+
+                Process.Start(psiVis);
+                notify($"「{t.Label}」已启动（窗口已打开）", false);
+            }
+            catch (Win32Exception e)
+            {
+                throw new UserFacingException($"启动不了：{e.Message}");
+            }
+            return;
+        }
+
+        // 默认：后台静默，等退出后提示成功/失败
         var psi = new ProcessStartInfo
         {
             FileName = args[0],
@@ -106,11 +158,13 @@ public sealed class TaskRunner
             }
             else
             {
-                // 写完整错误到 error.log
+                // 写完整错误到按天日志
                 try
                 {
-                    var path = Path.Combine(Store.Dir, "error.log");
-                    var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 「{t.Label}」失败 (exit {code}): {last}{Environment.NewLine}";
+                    var dir = Path.Combine(Store.Dir, "logs");
+                    Directory.CreateDirectory(dir);
+                    var path = Path.Combine(dir, $"error-{DateTime.Now:yyyy-MM-dd}.log");
+                    var line = $"[{DateTime.Now:HH:mm:ss}] 「{t.Label}」失败 (exit {code}): {last}{Environment.NewLine}";
                     File.AppendAllText(path, line, Encoding.UTF8);
                 }
                 catch { }

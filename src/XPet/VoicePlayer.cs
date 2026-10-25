@@ -14,11 +14,23 @@ public sealed class VoicePlayer
     readonly MediaPlayer _player = new();
     readonly string _dir;
     bool _enabled = true;
+    double _volume = 1.0;
 
     public bool Enabled
     {
         get => _enabled;
         set => _enabled = value;
+    }
+
+    /// <summary>0.0 ~ 1.0</summary>
+    public double Volume
+    {
+        get => _volume;
+        set
+        {
+            _volume = Math.Clamp(value, 0.0, 1.0);
+            _player.Volume = _volume;
+        }
     }
 
     public VoicePlayer()
@@ -32,6 +44,7 @@ public sealed class VoicePlayer
         };
         _dir = candidates.FirstOrDefault(Directory.Exists)
                ?? Path.Combine(AppContext.BaseDirectory, "Resources", "Voice");
+        _player.Volume = _volume;
     }
 
     /// <summary>播放指定名字的语音（不带扩展名）。支持 .wav / .mp3 / .m4a</summary>
@@ -45,6 +58,7 @@ public sealed class VoicePlayer
             if (path == null) return;
 
             _player.Stop();
+            _player.Volume = _volume;
             _player.Open(new Uri(path, UriKind.Absolute));
             _player.Play();
         }

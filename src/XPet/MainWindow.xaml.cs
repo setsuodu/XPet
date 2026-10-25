@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -113,6 +114,7 @@ public partial class MainWindow : Window
         LoadSprites();          // 加载精灵图
         LoadAll();
         RestorePosition();
+        CleanOldLogs();
         InitTray();
 
         BobShift.BeginAnimation(TranslateTransform.YProperty,
@@ -160,9 +162,22 @@ public partial class MainWindow : Window
         var maxY = minY + SystemParameters.VirtualScreenHeight - Height;
         Left = Math.Max(minX, Math.Min(left, maxX));
         Top = Math.Max(minY, Math.Min(top, maxY));
+
+        // 恢复音量
+        voice.Volume = s.VoiceVolume;
     }
 
-    void SavePosition() => Store.Save("state.json", new PetState { Left = Left, Top = Top });
+    void SaveState()
+    {
+        Store.Save("state.json", new PetState
+        {
+            Left = Left,
+            Top = Top,
+            VoiceVolume = voice.Volume,
+        });
+    }
+
+    void SavePosition() => SaveState();
 
     // ---------- 托盘 ----------
 
@@ -281,13 +296,19 @@ public partial class MainWindow : Window
         var openLog = new MenuItem { Header = "打开错误日志" };
         openLog.Click += (_, _) =>
         {
-            var path = Path.Combine(Store.Dir, "error.log");
-            if (!File.Exists(path))
+            var dir = Path.Combine(Store.Dir, "logs");
+            var today = Path.Combine(dir, $"error-{DateTime.Now:yyyy-MM-dd}.log");
+            if (File.Exists(today))
             {
-                ShowBubble("还没有错误日志", false, 2500);
+                Process.Start(new ProcessStartInfo(today) { UseShellExecute = true });
                 return;
             }
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            if (Directory.Exists(dir) && Directory.EnumerateFiles(dir, "error-*.log").Any())
+            {
+                Process.Start(new ProcessStartInfo(dir) { UseShellExecute = true });
+                return;
+            }
+            ShowBubble("还没有错误日志", false, 2500);
         };
         m.Items.Add(openLog);
 
@@ -299,6 +320,43 @@ public partial class MainWindow : Window
             voice.Play("config_reload");
         };
         m.Items.Add(reload);
+
+        m.Items.Add(new Separator());
+
+        // ---------- 设置 ----------
+        var settings = new MenuItem { Header = "设置" };
+
+        // 音量
+        var volMenu = new MenuItem { Header = $"音量  {(int)(voice.Volume * 100)}%" };
+        foreach (var pct in new[] { 0, 25, 50, 75, 100 })
+        {
+            var p = pct;
+            var item = new MenuItem
+            {
+                Header = $"{p}%",
+                IsChecked = (int)(voice.Volume * 100 + 0.5) == p,
+            };
+            item.Click += (_, _) =>
+            {
+                voice.Volume = p / 100.0;
+                SaveState();
+                ShowBubble($"音量已设为 {p}%", false, 2000);
+                voice.Play("click");
+            };
+            volMenu.Items.Add(item);
+        }
+        settings.Items.Add(volMenu);
+
+        // 版本
+        var ver = Assembly.GetExecutingAssembly().GetName().Version;
+        var verStr = ver != null ? $"{ver.Major}.{ver.Minor}.{ver.Build}" : "dev";
+        settings.Items.Add(new MenuItem
+        {
+            Header = $"版本  v{verStr}",
+            IsEnabled = false,
+        });
+
+        m.Items.Add(settings);
 
         m.Items.Add(new Separator());
 
@@ -443,19 +501,40 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>把完整错误追加到 %APPDATA%\XPet\error.log</summary>
+    /// <summary>按天写入 %APPDATA%\XPet\logs\error-yyyy-MM-dd.log</summary>
     static void LogError(string text)
     {
         try
         {
-            var path = Path.Combine(Store.Dir, "error.log");
-            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}{Environment.NewLine}";
+            var dir = Path.Combine(Store.Dir, "logs");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, $"error-{DateTime.Now:yyyy-MM-dd}.log");
+            var line = $"[{DateTime.Now:HH:mm:ss}] {text}{Environment.NewLine}";
             File.AppendAllText(path, line, Encoding.UTF8);
         }
         catch
         {
             // 写日志失败就忽略，别把宠物搞崩
         }
+    }
+
+    /// <summary>启动时清理 7 天前的日志文件</summary>
+    static void CleanOldLogs()
+    {
+        try
+        {
+            var dir = Path.Combine(Store.Dir, "logs");
+            if (!Directory.Exists(dir)) return;
+            var cutoff = DateTime.Now.Date.AddDays(-7);
+            foreach (var f in Directory.EnumerateFiles(dir, "error-*.log"))
+            {
+                var name = Path.GetFileNameWithoutExtension(f); // error-2026-10-25
+                if (name.Length < 16) continue;
+                if (DateTime.TryParse(name.AsSpan(6), out var d) && d < cutoff)
+                    File.Delete(f);
+            }
+        }
+        catch { }
     }
 
     // ---------- 显示 ----------

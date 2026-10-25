@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using XPet.Panel.Models;
@@ -64,6 +65,38 @@ public sealed class ToolRunner
             throw new InvalidOperationException("没有配置 args");
 
         var args = tool.Args.ToList();
+
+        // visible=true：WorkingDirectory=脚本目录，cmd /k 直接跑（不套 cd）
+        if (tool.Visible)
+        {
+            var py = args.LastOrDefault(a => a.EndsWith(".py", StringComparison.OrdinalIgnoreCase));
+            var workDir = py != null ? (Path.GetDirectoryName(py) ?? "") : "";
+            if (string.IsNullOrEmpty(workDir) || !Directory.Exists(workDir))
+                workDir = Environment.CurrentDirectory;
+
+            var runArgs = args.ToList();
+            if (py != null)
+            {
+                var i = runArgs.FindIndex(a => a.Equals(py, StringComparison.OrdinalIgnoreCase));
+                if (i >= 0) runArgs[i] = Path.GetFileName(py);
+            }
+            var cmdline = string.Join(" ", runArgs.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
+
+            var psiVis = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/k " + cmdline,
+                UseShellExecute = false,
+                CreateNoWindow = false,
+                WorkingDirectory = workDir,
+            };
+            psiVis.Environment["PYTHONIOENCODING"] = "utf-8";
+            psiVis.Environment["PYTHONUTF8"] = "1";
+            Process.Start(psiVis);
+            Notify?.Invoke($"「{tool.Label}」已启动（窗口已打开）", false);
+            return;
+        }
+
         var psi = new ProcessStartInfo
         {
             FileName = args[0],
