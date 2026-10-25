@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -99,8 +100,23 @@ public sealed class TaskRunner
         {
             p.WaitForExit(); // 等输出读完，last 才是真正的最后一行
             var code = p.ExitCode;
-            if (code == 0) notify($"「{t.Label}」完成", false);
-            else notify($"「{t.Label}」失败（退出码 {code}）：{Short(last)}", true);
+            if (code == 0)
+            {
+                notify($"「{t.Label}」完成", false);
+            }
+            else
+            {
+                // 写完整错误到 error.log
+                try
+                {
+                    var path = Path.Combine(Store.Dir, "error.log");
+                    var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 「{t.Label}」失败 (exit {code}): {last}{Environment.NewLine}";
+                    File.AppendAllText(path, line, Encoding.UTF8);
+                }
+                catch { }
+
+                notify($"「{t.Label}」失败（退出码 {code}）：{Short(last)}", true);
+            }
             p.Dispose();
         };
 
@@ -117,5 +133,5 @@ public sealed class TaskRunner
         notify($"「{t.Label}」开始运行…", false);
     }
 
-    static string Short(string s) => s.Length <= 60 ? s : s[..60] + "…";
+    static string Short(string s) => s.Length <= 120 ? s : s[..117] + "…";
 }

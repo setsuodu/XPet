@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -277,6 +278,19 @@ public partial class MainWindow : Window
         openCfg.Click += (_, _) => Process.Start(new ProcessStartInfo(Store.Dir) { UseShellExecute = true });
         m.Items.Add(openCfg);
 
+        var openLog = new MenuItem { Header = "打开错误日志" };
+        openLog.Click += (_, _) =>
+        {
+            var path = Path.Combine(Store.Dir, "error.log");
+            if (!File.Exists(path))
+            {
+                ShowBubble("还没有错误日志", false, 2500);
+                return;
+            }
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        };
+        m.Items.Add(openLog);
+
         var reload = new MenuItem { Header = "重新载入配置" };
         reload.Click += (_, _) =>
         {
@@ -380,7 +394,8 @@ public partial class MainWindow : Window
     {
         if (isErr)
         {
-            Notify($"入库出错：{Short(text)}", true);
+            LogError(text);
+            Notify($"入库出错：{text}", true);   // 不再截断，完整显示
             voice.Play("ingest_error");
             return;
         }
@@ -422,8 +437,24 @@ public partial class MainWindow : Window
         // 问题说明行（"    - xxx"）或明确的失败信息
         if (text.TrimStart().StartsWith("- ") || text.Contains("出错") || text.Contains("下载失败"))
         {
-            Notify(Short(text.Trim()), true);
+            LogError(text);
+            Notify(text.Trim(), true);          // 不再截断
             voice.Play("ingest_error");
+        }
+    }
+
+    /// <summary>把完整错误追加到 %APPDATA%\XPet\error.log</summary>
+    static void LogError(string text)
+    {
+        try
+        {
+            var path = Path.Combine(Store.Dir, "error.log");
+            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}{Environment.NewLine}";
+            File.AppendAllText(path, line, Encoding.UTF8);
+        }
+        catch
+        {
+            // 写日志失败就忽略，别把宠物搞崩
         }
     }
 
@@ -658,5 +689,5 @@ public partial class MainWindow : Window
         else Dispatcher.Invoke(a);
     }
 
-    static string Short(string s) => s.Length <= 80 ? s : s[..77] + "...";
+    static string Short(string s) => s.Length <= 160 ? s : s[..157] + "...";
 }
