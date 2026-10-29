@@ -45,8 +45,9 @@ public sealed class TaskRunner
         if (url.Contains('"')) throw new UserFacingException($"「{t.Label}」的 url 里有引号，不能用");
 
         var args = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(c.ChromeProfile))
-            args.Append("--profile-directory=\"").Append(c.ChromeProfile.Replace("\"", "")).Append("\" ");
+        // 空也强制用 Default，避免复用当前激活的 Chrome 实例
+        var profile = string.IsNullOrWhiteSpace(c.ChromeProfile) ? "Default" : c.ChromeProfile.Replace("\"", "");
+        args.Append("--profile-directory=\"").Append(profile).Append("\" ");
         args.Append('"').Append(url).Append('"');
 
         try
